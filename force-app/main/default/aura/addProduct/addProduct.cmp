@@ -1,0 +1,150 @@
+<aura:component implements="force:appHostable" controller="addProduct">
+    <aura:attribute type="List" name="PricebookEntryList"/>
+    <aura:attribute type="List" name="filteredEntryList"/>
+    <aura:attribute name="mycolumns" type="List"/>
+    <aura:attribute name="mycolumns2" type="List"/>
+    <aura:attribute name="DraftValues" type="Object" default="[]"/>
+    <aura:attribute name="selectedRowsCount" type="Integer" default="0"/>
+    <aura:attribute name="maxRowSelection" type="Integer" default=""/>
+    <aura:attribute name="draftValueMap" type="Map" default="{}"/>
+    <aura:attribute name="QuantityList" type="Map" default="{row-0:null}"/>    
+    <aura:attribute name="selectedProducts" type="List"/>
+    <aura:attribute name="isModalOpen" type="boolean" default="false"/>
+    <aura:attribute name="isModalsOpen" type="boolean" default="false"/>
+    <aura:attribute name="isModalShow" type="boolean" default="false"/>
+    <aura:attribute name="errors" type="Object"/>
+    <aura:handler name="init" value="{!this}" action="{!c.init}"/>
+    
+    <aura:html tag="style">
+        .slds-modal__container {
+        
+        }
+    </aura:html> 
+    <div class="slds-modal__container">
+        <lightning:button onclick="{!c.showSelectedProducts}" label="Add Product" variant="brand" class=" slds-text-heading_medium"/>
+    </div>
+    <aura:if isTrue="{!v.isModalsOpen}">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        	<div class="slds-modal__container" style="heigth: 500px; width: 100%">
+                <header class="slds-modal__header" >
+                    <lightning:buttonIcon iconName="utility:close"
+                         onclick="{! c.closeModel2 }"
+                         alternativetext="close"
+                         variant="bare-inverse"
+                         class="slds-modal__close"/>
+                    <h1 class="slds-text-align_center slds-text-heading_large slds-box slds-theme_default">Add Product</h1>
+                    <h3 class="slds-text-heading_small">Price Book: Standard</h3>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="min-height:10vw;">
+                    <input id="text-input-01" class="slds-input" type="text" onkeyup="{!c.searchKeyChange}" placeholder="Search Product....."/>
+                    <p onclick="{!c.showSelectedData}">Show Selected({!v.selectedRowsCount})</p>
+                    <br/><br/>
+                    <lightning:datatable data="{!v.filteredEntryList}"
+                                         columns="{!v.mycolumns}"
+                                         keyField="id"
+                                         maxRowSelection="{! v.maxRowSelection }"
+                                         onrowselection="{!c.updateSelectedText}"
+                                         maxColumnWidth="600"/>
+                </div>
+                <footer class="slds-modal__footer">
+                	<lightning:button variant="neutral"
+                                      label="Cancel"
+                                      title="Cancel"
+                                      onclick="{!c.closeModel2}"/>
+                    <lightning:button variant="brand"
+                                      label="Next"
+                                      title="Next"
+                                      onclick="{!c.showSelectedProduct}"/>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    <aura:if isTrue="{!v.isModalShow}">
+
+    	<section role="dialog" tabindex="-1" aria-labelledby="modal-feading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        	<div class="slds-modal__container">
+            	<header class="slds-modal__header">
+                	<lightning:buttonIcon iconName="utility:close"
+                                          onclick="{!c.closeModal}"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                   
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="min-height:30vw;">
+                	 <lightning:datatable aura:id="myDatatable"
+                                          draftValues="{!v.DraftValues}"
+                                          oncellchange="{!c.handlecellchange}"
+                                          data="{!v.selectedProducts}"
+                                          columns="{!v.mycolumns2}"
+                                          keyField="id" 
+                                          hideCheckboxColumn="true"
+                                          showRowNumberColumn='true'
+                                          onrowselection="{!c.handleSelect}"
+                                          onrowaction="{!c.doDelete}"
+                                          suppressBottomBar= "true"
+                                          onsuccess="{!c.handleSuccess}"
+                                          errors="{!v.errors}"
+                                          maxColumnWidth="600"/>                                        
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral"
+                                      label="Back"
+                                      title="Back"
+                                      onclick="{!c.doBack}"/>
+                    <lightning:button variant="brand"
+                                      label="Save"
+                                      title="Save"
+                                      onclick="{!c.doSave}"/>
+                    
+                                
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+    <aura:if isTrue="{!v.isModalOpen}">
+    	<section role="dialog" tabindex="-1" aria-labelledby="modal-feading-01" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        	<div class="slds-modal__container">
+            	<header class="slds-modal__header">
+                	<lightning:buttonIcon iconName="utility:close"
+                                          onclick="{!c.closeModal}"
+                                          alternativeText="close"
+                                          variant="bare-inverse"
+                                          class="slds-modal__close"/>
+                    <h2 class="slds-text-align_center slds-text-heading_medium slds-box slds-theme_default"> Edit Selected Product</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1" style="min-height:30vw;">
+                	 <lightning:datatable aura:id="myDatatable"
+                                          draftValues="{!v.DraftValues}"
+                                          oncellchange="{!c.handlecellchange}"
+                                          data="{!v.selectedProducts}"
+                                          columns="{!v.mycolumns2}"
+                                          keyField="id" 
+                                          hideCheckboxColumn="true"
+                                          showRowNumberColumn='true'
+                                          onrowselection="{!c.handleSelect}"
+                                          onrowaction="{!c.doDelete}"
+                                          suppressBottomBar= "true"
+                                          onsuccess="{!c.handleSuccess}"
+                                          errors="{!v.errors}"
+                                          maxColumnWidth="600"/>                                        
+                </div>
+                <footer class="slds-modal__footer">
+                    <lightning:button variant="neutral"
+                                      label="Back"
+                                      title="Back"
+                                      onclick="{!c.doBack}"/>
+                    <lightning:button variant="brand"
+                                      label="Save"
+                                      title="Save"
+                                      onclick="{!c.doSave}"/>
+                    
+                                
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </aura:if>
+</aura:component>
